@@ -1,34 +1,41 @@
 using System;
 using System.Collections.Generic;
 
-public class AStar {
+public class AStar
+{
     private int width, height;
     private Node[,] grid;
 
-    public AStar(int width, int height, bool[,] walkableMap) {
+    public AStar(int width, int height, bool[,] walkableMap)
+    {
         this.width = width;
         this.height = height;
         grid = new Node[width, height];
-        
-        for (int x = 0; x < width; x++) {
 
-            for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++)
+        {
+
+            for (int y = 0; y < height; y++)
+            {
                 grid[x, y] = new Node(x, y, walkableMap[x, y]);
             }
 
         }
     }
 
-    private int Heuristic(Node a, Node b) {
+    private int Heuristic(Node a, Node b)
+    {
         // Manhattan distance
         return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
     }
 
-    private IEnumerable<Node> GetNeighbors(Node node) {
+    private IEnumerable<Node> GetNeighbors(Node node)
+    {
         int[] dx = { -1, 1, 0, 0 };
         int[] dy = { 0, 0, -1, 1 };
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             int nx = node.X + dx[i];
             int ny = node.Y + dy[i];
 
@@ -37,7 +44,8 @@ public class AStar {
         }
     }
 
-    public List<Node> FindPath((int x, int y) start, (int x, int y) end) {
+    public List<Node> FindPath((int x, int y) start, (int x, int y) end)
+    {
         var openSet = new List<Node>();
         var closedSet = new HashSet<Node>();
 
@@ -49,15 +57,18 @@ public class AStar {
         startNode.H = Heuristic(startNode, endNode);
         startNode.Parent = null;
 
-        while (openSet.Count > 0) {
+        while (openSet.Count > 0)
+        {
             openSet.Sort((a, b) => a.F.CompareTo(b.F));
             Node current = openSet[0];
-            
-            if (current == endNode) {
+
+            if (current == endNode)
+            {
                 // Reconstruct path
                 var path = new List<Node>();
 
-                while (current != null) {
+                while (current != null)
+                {
                     path.Add(current);
                     current = current.Parent;
                 }
@@ -65,11 +76,12 @@ public class AStar {
                 path.Reverse();
                 return path;
             }
-            
+
             openSet.Remove(current);
             closedSet.Add(current);
-            
-            foreach (var neighbor in GetNeighbors(current)) {
+
+            foreach (var neighbor in GetNeighbors(current))
+            {
                 if (closedSet.Contains(neighbor))
                     continue;
 
@@ -87,5 +99,48 @@ public class AStar {
             }
         }
         return null; // No path found
+    }
+
+    public (List<Node> fullPath, List<(int x, int y)> passengerOrder)? FindBestVisitOrder((int x, int y) start, List<(int x, int y)> passengers) {
+        var bestPath = new List<Node>();
+        var bestOrder = new List<(int x, int y)>();
+        int bestCost = int.MaxValue;
+
+        foreach (var permutation in GetPermutations(passengers, passengers.Count)) {
+            var currentPath = new List<Node>();
+            int totalCost = 0;
+            var currentPos = start;
+            bool valid = true;
+
+            foreach (var next in permutation) {
+                var segment = FindPath(currentPos, next);
+                if (segment == null) {
+                    valid = false;
+                    break;
+                }
+
+                totalCost += segment.Count;
+                currentPath.AddRange(segment.Skip(1)); // Avoid duplicate points
+                currentPos = next;
+            }
+
+            if (valid && totalCost < bestCost) {
+                bestCost = totalCost;
+                bestPath = new List<Node>(currentPath);
+                bestOrder = permutation.ToList();
+            }
+        }
+
+        return bestPath.Count > 0 ? (bestPath, bestOrder) : null;
+    }
+
+    
+    public static IEnumerable<List<T>> GetPermutations<T>(List<T> list, int length) {
+        if (length == 1)
+            return list.Select(t => new List<T> { t });
+
+        return GetPermutations(list, length - 1)
+            .SelectMany(t => list.Where(e => !t.Contains(e)),
+                        (t1, t2) => new List<T>(t1) { t2 });
     }
 }
