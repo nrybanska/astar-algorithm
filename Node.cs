@@ -1,39 +1,21 @@
-public class Node {
-    public int X {
-        get;
-        set;
-    }
-    public int Y {
-        get;
-        set;
-    }
+using System;
 
-    // Cost from start
-    public int G{
-        get;
-        set;
-    } 
+public class Node
+{
+    public int X, Y;
+    public bool Walkable;
+    public int G, H;
+    public Node Parent;
+    public int F => G + H;
 
-    // Heuristic cost to end
-    public int H {
-        get;
-        set;
-    } 
-
-    // Total cost
-    public int F => G + H; 
-    public Node Parent {
-        get;
-        set;
-    }
-    public bool Walkable {
-        get;
-        set;
-    }
-
-    public Node(int x, int y, bool walkable = true) {
-        X = x;
-        Y = y;
+    public Node(int x, int y, bool walkable = true)
+    {
+        X = x; Y = y;
         Walkable = walkable;
+        G = H = 0;
+        Parent = null;
     }
+
+    public override bool Equals(object obj) => obj is Node n && X == n.X && Y == n.Y;
+    public override int GetHashCode() => HashCode.Combine(X, Y);
 }

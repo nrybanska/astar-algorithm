@@ -1,40 +1,40 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
-class Program {
-    static void Main(string[] args)
+class Program
+{
+    static void Main()
     {
-        // Create a 10x10 grid where all cells are walkable
         var map = new bool[10, 10];
         for (int x = 0; x < 10; x++)
             for (int y = 0; y < 10; y++)
-                map[x, y] = true;
+                map[x, y] = true; // all walkable for now
 
-        var astar = new AStar(10, 10, map);
+        var pathfinder = new AStarPathfinder(10, 10, map);
+        var planner = new RoutePlanner(pathfinder);
 
-        // Define start and passengers
-        var start = (0, 0);
-        var passengers = new List<(int, int)> {
-            (2, 3),
-            (5, 1),
-            (8, 8)
+        var passengers = new List<Passenger>
+        {
+            new Passenger(1, 2, 1, 3),
+            new Passenger(1, 1, 8, 8),
+            new Passenger(1, 4, 0, 0)
         };
 
-        // Run the algorithm
-        var result = astar.FindBestVisitOrder(start, passengers);
+        var start = (0, 0);
+        var result = planner.FindBestPath(start, passengers);
 
-        if (result != null)
+        if (result.HasValue)
         {
-            var (path, passengerOrder) = result.Value;
+            var (path, order) = result.Value;
+            Console.WriteLine("Passenger Order:");
+            foreach (var p in order)
+                Console.WriteLine($"{p.label} ({p.pos.x},{p.pos.y})");
 
-            Console.WriteLine("Visit passengers in this order:");
-            foreach (var passenger in passengerOrder)
-                Console.WriteLine($"Passenger at: ({passenger.x}, {passenger.y})");
+            Console.WriteLine("Full Path:");
+            foreach (var n in path)
+                Console.WriteLine($"({n.X}, {n.Y})");
 
-            Console.WriteLine("\nFull path to walk:");
-            foreach (var node in path)
-                Console.WriteLine($"({node.X}, {node.Y})");
+            // TODO: Move Unity twin and send goals to ROS2
         }
         else
         {
